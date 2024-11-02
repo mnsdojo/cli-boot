@@ -12,12 +12,12 @@ import (
 	"github.com/fatih/color"
 )
 
+// ProjectConfig holds the configuration for project generation
 type ProjectConfig struct {
 	ProjectName string
-	ModuleName  string
+	ModuleName  string // Short form (e.g., username/repo)
 	GoVersion   string
 }
-
 type FileTemplate struct {
 	Path     string
 	Template string
@@ -48,7 +48,7 @@ go {{.GoVersion}}
 import (
 	"log"
 
-	"github.com/{{.ModuleName}}/pkg"
+	"{{.ModuleName}}/pkg"
 )
 
 func main() {
@@ -63,7 +63,7 @@ This is a CLI application created with Go.
 
 ## Installation
 ` + "```bash" + `
-go get github.com/{{.ModuleName}}
+go get {{.ModuleName}}
 ` + "```" + `
 
 ## Usage
@@ -115,17 +115,16 @@ func prompt(msg string, defaultVal string) string {
 	return input
 }
 
-func validateInput(config *ProjectConfig) error {
-	if config.ProjectName == " " {
+func validateInputs(config *ProjectConfig) error {
+	if config.ProjectName == "" {
 		return fmt.Errorf("project name cannot be empty")
 	}
 	if config.ModuleName == "" {
-		return fmt.Errorf("module cannot be empty")
+		return fmt.Errorf("module name cannot be empty")
 	}
 	if !strings.HasPrefix(config.GoVersion, "1.") {
-		return fmt.Errorf("invalid go version format")
+		return fmt.Errorf("invalid Go version format. Expected 1.x.x")
 	}
-
 	return nil
 }
 
@@ -197,16 +196,18 @@ func main() {
 		ModuleName:  prompt("Enter the module name (e.g., github.com/username/project)", ""),
 		GoVersion:   prompt("Enter the Go version", "1.21"),
 	}
-	if err := validateInput(config); err != nil {
+	if err := validateInputs(config); err != nil {
 		log.Fatalf("%s Validation error: %v", fail("✗"), err)
 	}
 	fmt.Printf("\n%s Creating project structure ..\n\n", info("->"))
 	if err := createProjectStructure(config); err != nil {
 		log.Fatalf("%s Error :%v", fail("x"), err)
 	}
+
 	fmt.Printf("\n%s Project %s created successfully!\n", success("✓"), config.ProjectName)
-	fmt.Printf("\n%s Next steps : \n", info("->"))
+	fmt.Printf("\n%s Next steps:\n", info("→"))
 	fmt.Printf("  1. cd %s\n", config.ProjectName)
-	fmt.Printf("  2. go mod tidy\n")
-	fmt.Printf("  3. go run main.go\n\n")
+	fmt.Printf("  2. git init\n")
+	fmt.Printf("  3. go mod tidy\n")
+	fmt.Printf("  4. go run main.go\n\n")
 }
